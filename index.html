@@ -16,7 +16,7 @@
       <h2 style="margin:0 0 8px;font-size:18px;color:#0f3d5c;">ログイン</h2>
       <p style="margin:0 0 24px;font-size:13px;color:#627d98;">社員証QRコードをリーダー（Barcode to PC）で読み取ってください。</p>
 
-      <form id="loginForm" action="login.php" method="post" autocomplete="off">
+      <form id="loginForm" action="#" method="post" autocomplete="off">
         <label for="userCode" style="display:block;font-size:12px;font-weight:600;color:#334e68;margin-bottom:8px;">
           社員証QRコード
         </label>
@@ -32,6 +32,7 @@
           onblur="this.style.borderColor='#bcccdc';this.style.boxShadow='none';"
         >
         <p style="margin:10px 0 0;font-size:11px;color:#829ab1;">読み取り後、Enterキーでログイン処理を開始します。</p>
+        <p id="loginMessage" role="alert" style="display:none;margin:14px 0 0;padding:10px 12px;border-radius:6px;font-size:13px;"></p>
         <button
           type="submit"
           style="margin-top:24px;width:100%;padding:12px;background:#0f3d5c;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;"
@@ -39,6 +40,17 @@
           ログイン
         </button>
       </form>
+      <div id="loginSuccess" style="display:none;">
+        <p style="margin:0 0 8px;font-size:13px;color:#276749;">ログインに成功しました。</p>
+        <p id="loginUserInfo" style="margin:0 0 20px;font-size:14px;color:#1f2933;"></p>
+        <button
+          type="button"
+          id="logoutButton"
+          style="width:100%;padding:12px;background:#fff;color:#0f3d5c;border:1px solid #0f3d5c;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;"
+        >
+          ログアウト
+        </button>
+      </div>
     </section>
   </main>
 
@@ -46,39 +58,65 @@
     (function () {
       var form = document.getElementById("loginForm");
       var input = document.getElementById("userCode");
+      var message = document.getElementById("loginMessage");
+      var successPanel = document.getElementById("loginSuccess");
+      var userInfo = document.getElementById("loginUserInfo");
+      var users = {
+        "EMP-2026-001": { user_name: "佐藤 花子", department: "データマネジメント部", role: "OPERATOR" },
+        "EMP-2026-002": { user_name: "鈴木 一郎", department: "品質保証部", role: "REVIEWER" },
+        "EMP-2026-003": { user_name: "高橋 美咲", department: "システム管理部", role: "ADMIN" },
+        "EMP-2026-004": { user_name: "田中 健太", department: "非臨床研究部", role: "OPERATOR" },
+        "EMP-2026-005": { user_name: "伊藤 真由", department: "品質保証部", role: "REVIEWER" }
+      };
 
-      function prepareSubmit(userCode) {
+      function showMessage(text, isError) {
+        message.style.display = "block";
+        message.textContent = text;
+        message.style.background = isError ? "#fff5f5" : "#f0fff4";
+        message.style.color = isError ? "#c53030" : "#276749";
+        message.style.border = isError ? "1px solid #feb2b2" : "1px solid #9ae6b4";
+      }
+
+      function handleLogin(userCode) {
         var payload = {
           user_code: userCode,
           source: "qr-barcode-to-pc",
           captured_at: new Date().toISOString()
         };
         console.log("[REDECT] QR入力を検知しました:", payload);
-        return payload;
-      }
 
-      input.addEventListener("keydown", function (event) {
-        if (event.key !== "Enter") {
+        var user = users[userCode];
+        if (!user) {
+          console.warn("[REDECT] 未登録の社員証です:", userCode);
+          showMessage("未登録の社員証です。管理者に連絡してください。", true);
+          input.value = "";
+          input.focus();
           return;
         }
+
+        console.log("[REDECT] ログイン成功:", user);
+        form.style.display = "none";
+        successPanel.style.display = "block";
+        userInfo.textContent = user.user_name + "（" + user.department + " / " + user.role + "）";
+      }
+
+      form.addEventListener("submit", function (event) {
         event.preventDefault();
         var userCode = input.value.trim();
         if (!userCode) {
-          console.warn("[REDECT] 入力値が空のため送信を中止しました。");
+          showMessage("社員証QRコードを読み取ってください。", true);
+          input.focus();
           return;
         }
-        prepareSubmit(userCode);
-        form.submit();
+        handleLogin(userCode);
       });
 
-      form.addEventListener("submit", function (event) {
-        var userCode = input.value.trim();
-        if (!userCode) {
-          event.preventDefault();
-          console.warn("[REDECT] 入力値が空のため送信を中止しました。");
-          return;
-        }
-        prepareSubmit(userCode);
+      document.getElementById("logoutButton").addEventListener("click", function () {
+        successPanel.style.display = "none";
+        form.style.display = "block";
+        message.style.display = "none";
+        input.value = "";
+        input.focus();
       });
     })();
   </script>
