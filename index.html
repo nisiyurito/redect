@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>REDECT ログイン</title>
+</head>
+<body style="margin:0;font-family:'Segoe UI','Yu Gothic UI',sans-serif;background:#f4f6f8;color:#1f2933;min-height:100vh;">
+  <header style="background:#0f3d5c;color:#fff;padding:18px 32px;box-shadow:0 2px 8px rgba(15,61,92,.18);">
+    <h1 style="margin:0;font-size:20px;font-weight:600;letter-spacing:.04em;">REDECT 生データ運用支援システム</h1>
+    <p style="margin:6px 0 0;font-size:12px;opacity:.8;">CRO / 非臨床試験向け運用支援</p>
+  </header>
+
+  <main style="display:flex;align-items:center;justify-content:center;padding:48px 16px;">
+    <section style="width:100%;max-width:440px;background:#fff;border:1px solid #d9e2ec;border-radius:8px;padding:32px 28px;box-shadow:0 8px 24px rgba(15,61,92,.08);">
+      <h2 style="margin:0 0 8px;font-size:18px;color:#0f3d5c;">ログイン</h2>
+      <p style="margin:0 0 24px;font-size:13px;color:#627d98;">社員証QRコードをリーダー（Barcode to PC）で読み取ってください。</p>
+
+      <form id="loginForm" action="login.php" method="post" autocomplete="off">
+        <label for="userCode" style="display:block;font-size:12px;font-weight:600;color:#334e68;margin-bottom:8px;">
+          社員証QRコード
+        </label>
+        <input
+          type="text"
+          id="userCode"
+          name="user_code"
+          autofocus
+          required
+          placeholder="QRコードを読み取るか、社員IDを入力"
+          style="width:100%;box-sizing:border-box;padding:12px 14px;border:1px solid #bcccdc;border-radius:6px;font-size:16px;letter-spacing:.06em;outline:none;"
+          onfocus="this.style.borderColor='#0f3d5c';this.style.boxShadow='0 0 0 3px rgba(15,61,92,.12)';"
+          onblur="this.style.borderColor='#bcccdc';this.style.boxShadow='none';"
+        >
+        <p style="margin:10px 0 0;font-size:11px;color:#829ab1;">読み取り後、Enterキーでログイン処理を開始します。</p>
+        <button
+          type="submit"
+          style="margin-top:24px;width:100%;padding:12px;background:#0f3d5c;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;"
+        >
+          ログイン
+        </button>
+      </form>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      var form = document.getElementById("loginForm");
+      var input = document.getElementById("userCode");
+
+      function prepareSubmit(userCode) {
+        var payload = {
+          user_code: userCode,
+          source: "qr-barcode-to-pc",
+          captured_at: new Date().toISOString()
+        };
+        console.log("[REDECT] QR入力を検知しました:", payload);
+        return payload;
+      }
+
+      input.addEventListener("keydown", function (event) {
+        if (event.key !== "Enter") {
+          return;
+        }
+        event.preventDefault();
+        var userCode = input.value.trim();
+        if (!userCode) {
+          console.warn("[REDECT] 入力値が空のため送信を中止しました。");
+          return;
+        }
+        prepareSubmit(userCode);
+        form.submit();
+      });
+
+      form.addEventListener("submit", function (event) {
+        var userCode = input.value.trim();
+        if (!userCode) {
+          event.preventDefault();
+          console.warn("[REDECT] 入力値が空のため送信を中止しました。");
+          return;
+        }
+        prepareSubmit(userCode);
+      });
+    })();
+  </script>
+</body>
+</html>
